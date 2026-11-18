@@ -1,11 +1,12 @@
 # Mergington High School Activities API
 
-A super simple FastAPI application that allows students to view and sign up for extracurricular activities.
+A simple FastAPI application that lets students view activities and teachers manage signups.
 
 ## Features
 
 - View all available extracurricular activities
-- Sign up for activities
+- Teacher-only activity signup and participant removal
+- Teacher login with credentials supplied through environment variables
 
 ## Getting Started
 
@@ -15,13 +16,22 @@ A super simple FastAPI application that allows students to view and sign up for 
    pip install fastapi uvicorn
    ```
 
-2. Run the application:
+2. Configure teacher credentials in the environment (do not commit credentials):
+
+   ```sh
+   export TEACHER_USERNAME="teacher"
+   export TEACHER_PASSWORD="use-a-unique-secret"
+   ```
+
+   The activity list remains publicly viewable when credentials are not configured, but teacher login and roster changes are unavailable.
+
+3. From the repository root, run the application:
 
    ```
-   python app.py
+   uvicorn src.app:app --reload
    ```
 
-3. Open your browser and go to:
+4. Open your browser and go to:
    - API documentation: http://localhost:8000/docs
    - Alternative documentation: http://localhost:8000/redoc
 
@@ -30,7 +40,13 @@ A super simple FastAPI application that allows students to view and sign up for 
 | Method | Endpoint                                                          | Description                                                         |
 | ------ | ----------------------------------------------------------------- | ------------------------------------------------------------------- |
 | GET    | `/activities`                                                     | Get all activities with their details and current participant count |
-| POST   | `/activities/{activity_name}/signup?email=student@mergington.edu` | Sign up for an activity                                             |
+| POST   | `/auth/login`                                                      | Start a teacher session                                             |
+| GET    | `/auth/session`                                                    | Check the current teacher session                                   |
+| POST   | `/auth/logout`                                                     | End the current teacher session                                     |
+| POST   | `/activities/{activity_name}/signup?email=student@mergington.edu` | Sign up a student (teacher session required)                        |
+| DELETE | `/activities/{activity_name}/unregister?email=student@mergington.edu` | Remove a student (teacher session required)                     |
+
+Teacher credentials are read from `TEACHER_USERNAME` and `TEACHER_PASSWORD`; they are not stored in the repository. Successful logins receive an HTTP-only, same-site session cookie that expires after eight hours. Activity viewing is public, while signup and unregister requests require a valid teacher session.
 
 ## Data Model
 
